@@ -6,25 +6,33 @@ def main():
     titanic = pd.read_csv('titanic_data.csv')
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId')
-    
+    total_length = len(titanic.index)
 
-
-
+    sex = titanic['Sex'].value_counts()
+    print(sex)
+    male_v_female(titanic)
 
 
 
 def male_v_female(df):
     survive = df.groupby('Sex').sum()['Survived']
-    bar = go.Bar(
+    total = df['Sex'].value_counts()
+    trace1 = go.Bar(
         x = survive.index.tolist(),
-        y = survive.values
+        y = survive.values,
+        name = 'Survived'
     )
-    data = [bar]
-    fig = go.Figure(data=data)
+    trace2 = go.Bar(
+        x = total.index.tolist(),
+        y = total.values,
+        name = 'Total'
+    )
+    data = [trace2, trace1]
+    layout = go.Layout(
+        barmode='group'
+    )
+    fig = go.Figure(data=data, layout=layout)
     py.plot(fig, filename='bar.html', auto_open=True)
-
-
-
 
 
 
