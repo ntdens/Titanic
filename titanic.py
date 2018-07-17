@@ -9,7 +9,7 @@ def main():
     titanic.set_index('PassengerId')
     total_length = len(titanic.index)
     total_class = titanic.groupby('Pclass').count()['PassengerId']
-    bar_data(titanic, 'Pclass', 'stack')
+    bar_data(titanic, 'Embarked', 'group')
 
 
 # Returns a series with the survivor count
@@ -22,7 +22,7 @@ def survive_total(df, col):
     return df.groupby(col).sum()['Survived']
 
 
-# Prints bar charts based on sex data
+# Prints bar charts based on data
 def bar_data(df, col, type):
     survive = survive_total(df, col)
     total = df[col].value_counts()
@@ -31,27 +31,26 @@ def bar_data(df, col, type):
         barsort(survive, total, deceased, type, 'Gender')
     elif col == 'Pclass':
         barsort(survive, total, deceased, type, 'Class')
+    elif col == 'Embarked':
+        barsort(survive, total, deceased, type, 'Departure Port')
 
 
 # Sorts bar data based on if the user wants a stacked or grouped chart
 def barsort(survive, total, deceased, type, typestr):
     if type == 'stack':
-        bar(survive, deceased, type, 'Survival Based on ' + str(typestr), 'Survivors', 'Deceased', typestr,
-            'Number of Passengers')
+        bar(survive, deceased, type, 'Survival Based on ' + str(typestr), 'Survivors', 'Deceased', typestr)
     elif type == 'group':
-        bar(survive, total, type, 'Survival Based on ' + str(typestr), 'Survivors', 'Total', typestr,
-            'Number of Passengers')
+        bar(survive, total, type, 'Survival Based on ' + str(typestr), 'Survivors', 'Total', typestr)
 
 
 def age_data(df):
     survive_age = survive_count(df, 'Age')
     total_age = df['Age']
-    hist(total_age, survive_age, 'overlay', 'Survival Based on Age', 'Total', 'Survivors', 'Age',
-         'Number of Passengers')
+    hist(total_age, survive_age, 'overlay', 'Survival Based on Age', 'Total', 'Survivors', 'Age')
 
 
 # Creates a comparative bar chart.
-def bar(first, second, type, title, first_name='First', second_name='Second', xtitle='', ytitle=''):
+def bar(first, second, type, title, first_name='First', second_name='Second', xtitle=''):
     trace1 = go.Bar(
         x=first.index.tolist(),
         y=first.values,
@@ -70,7 +69,7 @@ def bar(first, second, type, title, first_name='First', second_name='Second', xt
             title=xtitle
         ),
         yaxis=dict(
-            title=ytitle
+            title='Number of Passengers'
         )
     )
     fig = go.Figure(data=data, layout=layout)
@@ -78,7 +77,7 @@ def bar(first, second, type, title, first_name='First', second_name='Second', xt
 
 
 # Creates a comparative histogram
-def hist(first, second, type, title, first_name='First', second_name='Second', xtitle='', ytitle=''):
+def hist(first, second, type, title, first_name='First', second_name='Second', xtitle=''):
     trace1 = go.Histogram(
         histfunc='sum',
         xbins=dict(start=0, end=100, size=1),
@@ -99,7 +98,7 @@ def hist(first, second, type, title, first_name='First', second_name='Second', x
             title=xtitle
         ),
         yaxis=dict(
-            title=ytitle
+            title='Number of Passengers'
         )
     )
     fig = go.Figure(data=data, layout=layout)
