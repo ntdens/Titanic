@@ -9,7 +9,11 @@ def main():
     titanic.set_index('PassengerId')
     total_length = len(titanic.index)
     total_class = titanic.groupby('Pclass').count()['PassengerId']
-    fare_data(titanic, 'Embarked')
+
+    # Grabbing the average fare data
+    print(multi(titanic, 'Embarked', 'Pclass'))
+    # Grabbing the number of each ticket sold
+    print(multi(titanic, 'Embarked', 'Pclass', func='count'))
 
 
 # Returns a series with the survivor count
@@ -21,6 +25,16 @@ def survive_count(df, col):
 def survive_total(df, col):
     return df.groupby(col).sum()['Survived']
 
+
+# Creating a multiindex dataframe and performs groupby functions on it
+def multi(df, index1, index2, func= 'mean'):
+    new = df.set_index([index1, index2, df.index])
+    new = new.sort_index()
+    if func == 'mean':
+        group = new.groupby(level=[index1, index2]).mean()['Fare']
+    elif func == 'count':
+        group = new.groupby(level=[index1, index2]).count()['Fare']
+    return group
 
 # Prints bar charts based on data
 def bar_data(df, col, type):
