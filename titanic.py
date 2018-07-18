@@ -37,12 +37,15 @@ def bar_data(df, col, type):
 
 # Sorts bar data based on if the user wants a stacked or grouped chart
 def barsort(survive, total, deceased, type, typestr):
+    survive_bar = bar_input(survive, 'Survivors')
+    total_bar = bar_input(total, 'Total')
+    deceased_bar = bar_input(deceased, 'Deceased')
     if type == 'stack':
-        bar(survive, deceased, type, 'Survival Based on ' + str(typestr), 'Survivors', 'Deceased', typestr,
-            'Number of Passengers')
+        data = [survive_bar, deceased_bar]
+        bar(data, type, 'Survival Based on ' + str(typestr), typestr, 'Number of Passengers')
     elif type == 'group':
-        bar(survive, total, type, 'Survival Based on ' + str(typestr), 'Survivors', 'Total', typestr,
-            'Number of Passengers')
+        data = [survive_bar, total_bar]
+        bar(data, type, 'Survival Based on ' + str(typestr), typestr, 'Number of Passengers')
 
 
 # Prints histogram based on age data
@@ -56,32 +59,33 @@ def age_data(df):
 # Creates bar graphs based on fare data
 def fare_data(df, col):
     avg_fare = df.groupby(col).mean()['Fare']
-    survive_fare = survive_count(df, 'Fare')
-    fare = pd.DataFrame(index=df.index)
-    fare = fare.join(survive_fare, how='right')
-    fare = fare.join(df[col], how='left')
-    fare = fare.groupby(col).mean()['Fare']
+    sur_fare = survive_count(df, 'Fare')
+    survive_fare = pd.DataFrame(index=df.index)
+    survive_fare = survive_fare.join(sur_fare, how='right')
+    survive_fare = survive_fare.join(df[col], how='left')
+    survive_fare = survive_fare.groupby(col).mean()['Fare']
+    bar_avg_fare = bar_input(avg_fare, 'Average Fare')
+    bar_survive_fare = bar_input(survive_fare, 'Survivor Fare')
+    data = [bar_avg_fare, bar_survive_fare]
     if col == 'Pclass':
-        bar(avg_fare, fare, 'group', 'Cost of Tickets by Class of Survivors vs Average', 'Average Fare',
-            'Survivor Fare', 'Fare by Class', 'Price')
+        bar(data, 'group', 'Cost of Tickets by Class of Survivors vs Average', 'Fare by Class', 'Price')
     elif col == 'Embarked':
-        bar(avg_fare, fare, 'group', 'Cost of Tickets by Port of Survivors vs Average', 'Average Fare',
-            'Survivor Fare', 'Fare by Port', 'Price')
+        bar(data, 'group', 'Cost of Tickets by Port of Survivors vs Average', 'Fare by Port', 'Price')
+
+
+# Creates traces for the bar graph data
+def bar_input(series, name=''):
+    trace = go.Bar(
+        x=series.index.tolist(),
+        y=series.values,
+        name=name
+    )
+    return trace
 
 
 # Creates a comparative bar chart.
-def bar(first, second, type, title, first_name='First', second_name='Second', xtitle='', ytitle=''):
-    trace1 = go.Bar(
-        x=first.index.tolist(),
-        y=first.values,
-        name=first_name
-    )
-    trace2 = go.Bar(
-        x=second.index.tolist(),
-        y=second.values,
-        name=second_name
-    )
-    data = [trace1, trace2]
+def bar(data, type, title, xtitle='', ytitle=''):
+    data = data
     layout = go.Layout(
         title=title,
         barmode=type,
