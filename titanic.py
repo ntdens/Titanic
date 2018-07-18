@@ -9,12 +9,7 @@ def main():
     titanic.set_index('PassengerId')
     total_length = len(titanic.index)
     total_class = titanic.groupby('Pclass').count()['PassengerId']
-
-    fare_data(titanic, 'Pclass')
-    # Grabbing the average fare data
-    print(multi(titanic, 'Embarked', 'Pclass'))
-    # Grabbing the number of each ticket sold
-    print(multi(titanic, 'Embarked', 'Pclass', func='count'))
+    portfare_data(titanic, 'count')
 
 
 # Returns a series with the survivor count
@@ -31,24 +26,23 @@ def survive_total(df, col):
 def multi(df, index1, index2, func='mean'):
     new = df.set_index([index1, index2, df.index])
     new = new.sort_index()
-    if func == 'mean':
-        group = new.groupby(level=[index1, index2]).mean()['Fare']
-    elif func == 'count':
+    group = new.groupby(level=[index1, index2]).mean()['Fare']
+    if func == 'count':
         group = new.groupby(level=[index1, index2]).count()['Fare']
     return group
 
 
 # Prints bar charts based on data
-def bar_data(df, col, type):
+def bar_data(df, col, gtype):
     survive = survive_total(df, col)
     total = df[col].value_counts()
     deceased = total - survive
     if col == 'Sex':
-        barsort(survive, total, deceased, type, 'Gender')
+        barsort(survive, total, deceased, gtype, 'Gender')
     elif col == 'Pclass':
-        barsort(survive, total, deceased, type, 'Class')
+        barsort(survive, total, deceased, gtype, 'Class')
     elif col == 'Embarked':
-        barsort(survive, total, deceased, type, 'Departure Port')
+        barsort(survive, total, deceased, gtype, 'Departure Port')
 
 
 # Sorts bar data based on if the user wants a stacked or grouped chart
@@ -93,8 +87,25 @@ def fare_data(df, col):
         graph(data, layout)
 
 
-# Creates traces for the bar graph data
+# Creates bar charts based on port-fare data
+def portfare_data(df, ftype):
+    port_fare = multi(df, 'Embarked', 'Pclass', func=ftype)
+    port_first = port_fare.unstack()[1]
+    port_second = port_fare.unstack()[2]
+    port_third = port_fare.unstack()[3]
+    first_trace = trace_input(port_first, '1st Class')
+    second_trace = trace_input(port_second, '2nd Class')
+    third_trace = trace_input(port_third, '3rd Class')
+    layout = lay('Average Fare for Each Class Based on Port', 'group', 'Port', 'Fare')
+    if ftype == 'count':
+        layout = lay('Number of Tickets for Each Class Based on Port', 'group', 'Port', 'Tickets')
+    data = [first_trace, second_trace, third_trace]
+    graph(data, layout)
+
+
+# Creates traces for the graph data
 def trace_input(series, name='', graphtype='bar'):
+    trace = dict()
     if graphtype == 'bar':
         trace = go.Bar(
             x=series.index.tolist(),
@@ -129,7 +140,7 @@ def lay(title, gtype, xtitle='', ytitle=''):
 # Creates a graph.
 def graph(data, layout):
     fig = go.Figure(data=data, layout=layout)
-    py.plot(fig, filename='bar.html', auto_open=True)
+    py.plot(fig, filename='graph.html', auto_open=True)
 
 
 if __name__ == '__main__':
