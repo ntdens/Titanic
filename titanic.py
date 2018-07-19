@@ -8,9 +8,7 @@ def main():
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId')
     total_length = len(titanic.index)
-    total_class = titanic.groupby('Pclass').count()['PassengerId']
-    portfare_data(titanic, 'count')
-
+    bar_data(titanic, 'Cabin', 'stack')
 
 # Returns a series with the survivor count
 def survive_count(df, col):
@@ -43,6 +41,8 @@ def bar_data(df, col, gtype):
         barsort(survive, total, deceased, gtype, 'Class')
     elif col == 'Embarked':
         barsort(survive, total, deceased, gtype, 'Departure Port')
+    elif col == 'Cabin':
+        barsort(survive, total, deceased, gtype, 'Cabin')
 
 
 # Sorts bar data based on if the user wants a stacked or grouped chart
@@ -100,6 +100,16 @@ def portfare_data(df, ftype):
     if ftype == 'count':
         layout = lay('Number of Tickets for Each Class Based on Port', 'group', 'Port', 'Tickets')
     data = [first_trace, second_trace, third_trace]
+    graph(data, layout)
+
+
+def cabin_data(df):
+    total_class = df.groupby('Pclass').count()['PassengerId']
+    class_cabin = df.groupby('Pclass').count()['Cabin']
+    bar_total_class = trace_input(total_class, 'Total Passengers')
+    bar_class_cabin = trace_input(class_cabin, 'Passengers with Cabins')
+    data = [bar_total_class, bar_class_cabin]
+    layout = lay('Passengers with Cabins Compared to All, Sorted By Class', 'group', 'Class', 'Passengers')
     graph(data, layout)
 
 
