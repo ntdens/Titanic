@@ -7,17 +7,14 @@ def main():
     titanic = pd.read_csv('titanic_data.csv')
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId')
-    total_length = len(titanic.index)
-    bar_data(titanic, 'Cabin', 'stack')
-
-# Returns a series with the survivor count
-def survive_count(df, col):
-    return df[col].compress(df['Survived'].values)
 
 
-# Returns a series with the survivor total
-def survive_total(df, col):
-    return df.groupby(col).sum()['Survived']
+# Returns a series with survivor data
+def survive_stats(df, col, kind='values'):
+    if kind == 'values':
+        return df[col].compress(df['Survived'].values)
+    if kind == 'sum':
+        return df.groupby(col).sum()['Survived']
 
 
 # Creating a multiindex dataframe and performs groupby functions on it
@@ -32,7 +29,7 @@ def multi(df, index1, index2, func='mean'):
 
 # Prints bar charts based on data
 def bar_data(df, col, gtype):
-    survive = survive_total(df, col)
+    survive = survive_stats(df, col, 'sum')
     total = df[col].value_counts()
     deceased = total - survive
     if col == 'Sex':
@@ -61,7 +58,7 @@ def barsort(survive, total, deceased, gtype, typestr):
 
 # Prints histogram based on age data
 def age_data(df):
-    survive_age = survive_count(df, 'Age')
+    survive_age = survive_stats(df, 'Age')
     total_age = df['Age']
     data = [trace_input(total_age, 'Total', 'hist'), trace_input(survive_age, 'Survivors', 'hist')]
     layout = lay('Survival Based on Age', 'overlay', 'Age', 'Number of Passengers')
@@ -71,7 +68,7 @@ def age_data(df):
 # Creates bar graphs based on fare data
 def fare_data(df, col):
     avg_fare = df.groupby(col).mean()['Fare']
-    sur_fare = survive_count(df, 'Fare')
+    sur_fare = survive_stats(df, 'Fare')
     survive_fare = pd.DataFrame(index=df.index)
     survive_fare = survive_fare.join(sur_fare, how='right')
     survive_fare = survive_fare.join(df[col], how='left')
@@ -102,7 +99,7 @@ def portfare_data(df, ftype):
     data = [first_trace, second_trace, third_trace]
     graph(data, layout)
 
-
+# Data on cabin users by class
 def cabin_data(df):
     total_class = df.groupby('Pclass').count()['PassengerId']
     class_cabin = df.groupby('Pclass').count()['Cabin']
@@ -111,6 +108,17 @@ def cabin_data(df):
     data = [bar_total_class, bar_class_cabin]
     layout = lay('Passengers with Cabins Compared to All, Sorted By Class', 'group', 'Class', 'Passengers')
     graph(data, layout)
+
+# Data on cabin users vs everyone
+def cabin_total_data(df, gtype):
+    total_length = len(df.index)
+    total_cabin = df['Cabin'].count()
+    cabin_survive = survive_stats(df, 'Cabin').count()
+    total_survive = survive_stats(df, 'PassengerId').count()
+    survive = pd.Series([total_survive, cabin_survive], index=['Total', 'Cabin'])
+    total = pd.Series([total_length, total_cabin], index=['Total', 'Cabin'])
+    deceased = total - survive
+    barsort(survive, total, deceased, gtype, 'Cabin')
 
 
 # Creates traces for the graph data
