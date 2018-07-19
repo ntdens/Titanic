@@ -1,12 +1,13 @@
 import pandas as pd
 import plotly.offline as py
 import plotly.graph_objs as go
+import numpy as np
 
 
 def main():
     titanic = pd.read_csv('titanic_data.csv')
     titanic['Survived'] = titanic['Survived'].astype(bool)
-    titanic.set_index('PassengerId')
+    titanic.set_index('PassengerId', inplace=True)
 
 
 # Returns a series with survivor data
@@ -32,14 +33,7 @@ def bar_data(df, col, gtype):
     survive = survive_stats(df, col, 'sum')
     total = df[col].value_counts()
     deceased = total - survive
-    if col == 'Sex':
-        barsort(survive, total, deceased, gtype, 'Gender')
-    elif col == 'Pclass':
-        barsort(survive, total, deceased, gtype, 'Class')
-    elif col == 'Embarked':
-        barsort(survive, total, deceased, gtype, 'Departure Port')
-    elif col == 'Cabin':
-        barsort(survive, total, deceased, gtype, 'Cabin')
+    barsort(survive, total, deceased, gtype, str(col))
 
 
 # Sorts bar data based on if the user wants a stacked or grouped chart
@@ -99,6 +93,7 @@ def portfare_data(df, ftype):
     data = [first_trace, second_trace, third_trace]
     graph(data, layout)
 
+
 # Data on cabin users by class
 def cabin_data(df):
     total_class = df.groupby('Pclass').count()['PassengerId']
@@ -109,16 +104,22 @@ def cabin_data(df):
     layout = lay('Passengers with Cabins Compared to All, Sorted By Class', 'group', 'Class', 'Passengers')
     graph(data, layout)
 
-# Data on cabin users vs everyone
-def cabin_total_data(df, gtype):
-    total_length = len(df.index)
-    total_cabin = df['Cabin'].count()
-    cabin_survive = survive_stats(df, 'Cabin').count()
-    total_survive = survive_stats(df, 'PassengerId').count()
-    survive = pd.Series([total_survive, cabin_survive], index=['Total', 'Cabin'])
-    total = pd.Series([total_length, total_cabin], index=['Total', 'Cabin'])
-    deceased = total - survive
-    barsort(survive, total, deceased, gtype, 'Cabin')
+
+# Creates a new dataframe based on owning a cabin
+def cabin_df(df):
+    cabin = pd.DataFrame(index=df.index)
+    cabin['Cabin'] = np.where(df['Cabin'].isnull().values, 'No Cabin', 'Has Cabin')
+    cabin['Survived'] = df['Survived']
+    return cabin
+
+
+# Creates a new dataframe based on the existence of family members
+def family_df(df):
+    family = pd.DataFrame(index=df.index)
+    family['SibSp'] = np.where(df['SibSp'] > 0, 'Has Siblings/Spouse', 'No Siblings/Spouse')
+    family['Parch'] = np.where(df['SibSp'] > 0, 'Has Parents/Child', 'No Parents/Child')
+    family['Survived'] = df['Survived']
+    return family
 
 
 # Creates traces for the graph data
