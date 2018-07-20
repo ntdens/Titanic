@@ -8,8 +8,9 @@ def main():
     titanic = pd.read_csv('titanic_data.csv')
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId', inplace=True)
-    family =family_df(titanic)
-    print(family.head())
+    family = family_df(titanic)
+    fare_hist(family, 'Family')
+
 
 
 # Returns a series with survivor data
@@ -21,12 +22,12 @@ def survive_stats(df, col, kind='values'):
 
 
 # Creating a multiindex dataframe and performs groupby functions on it
-def multi(df, index1, index2, func='mean'):
+def multi(df, index1, index2, col='Fare', func='mean'):
     new = df.set_index([index1, index2, df.index])
     new = new.sort_index()
-    group = new.groupby(level=[index1, index2]).mean()['Fare']
+    group = new.groupby(level=[index1, index2]).mean()[col]
     if func == 'count':
-        group = new.groupby(level=[index1, index2]).count()['Fare']
+        group = new.groupby(level=[index1, index2]).count()[col]
     return group
 
 
@@ -83,18 +84,18 @@ def fare_data(df, col):
         graph(data, layout)
 
 
-# Creates bar charts based on port-fare data
-def portfare_data(df, ftype):
-    port_fare = multi(df, 'Embarked', 'Pclass', func=ftype)
-    port_first = port_fare.unstack()[1]
-    port_second = port_fare.unstack()[2]
-    port_third = port_fare.unstack()[3]
-    first_trace = trace_input(port_first, '1st Class')
-    second_trace = trace_input(port_second, '2nd Class')
-    third_trace = trace_input(port_third, '3rd Class')
+# Creates bar charts based on multiindexes
+def multi_bar(df, ftype):
+    first = df.unstack()[1]
+    second = df.unstack()[2]
+    third = df.unstack()[3]
+    first_trace = trace_input(first, '1st Class')
+    second_trace = trace_input(second, '2nd Class')
+    third_trace = trace_input(third, '3rd Class')
     layout = lay('Average Fare for Each Class Based on Port', 'group', 'Port', 'Fare')
     if ftype == 'count':
-        layout = lay('Number of Tickets for Each Class Based on Port', 'group', 'Port', 'Tickets')
+        layout = lay('Number of Passengers for Each Class Based on {}'.format(list(df.index.names)[0]), 'group',
+                     str(list(df.index.names)[0]), 'Passengers')
     data = [first_trace, second_trace, third_trace]
     graph(data, layout)
 
@@ -124,7 +125,9 @@ def family_df(df):
     family['Family'] = np.where((df['SibSp'] > 0) | (df['Parch'] > 0), 'Has Family', 'No Family')
     family['Pclass'] = df['Pclass']
     family['Survived'] = df['Survived']
+    family['Fare'] = df['Fare']
     return family
+
 
 # Creates box plots based on fares
 def fare_box(df):
@@ -141,8 +144,21 @@ def fare_box(df):
     graph(data, layout)
 
 
+# Creates a histogram based on fare data
+def fare_hist(df, col, size='1'):
+    fare = df.set_index(col)
+    fare.sort_index(inplace=True)
+    data = []
+    df_index = sorted(df[col].unique())
+    for i in df_index:
+        value = fare.loc[i]['Fare']
+        data.append(trace_input(value, i, 'hist', size))
+    layout = lay('Fare by {}'.format(col), 'overlay', 'Fare', 'Number of Passengers')
+    graph(data, layout)
+
+
 # Creates traces for the graph data
-def trace_input(series, name='', graphtype='bar'):
+def trace_input(series, name='', graphtype='bar', size=1):
     trace = dict()
     if graphtype == 'bar':
         trace = go.Bar(
@@ -153,7 +169,8 @@ def trace_input(series, name='', graphtype='bar'):
     if graphtype == 'hist':
         trace = go.Histogram(
             histfunc='sum',
-            xbins=dict(start=0, end=100, size=1),
+            xbins=dict(start=0, end=600, size=size),
+            opacity=0.75,
             x=series,
             name=name
         )
