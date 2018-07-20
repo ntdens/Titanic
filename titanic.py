@@ -9,7 +9,9 @@ def main():
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId', inplace=True)
     meta = meta_df(titanic)
-    fare_hist(meta, 'Age')
+    multi_index = multi(meta, 'Age', 'Cabin', 'Survived', 'count')
+    multi_bar(multi_index, 'count')
+
 
 
 # Returns a series with survivor data
@@ -85,17 +87,15 @@ def fare_data(df, col):
 
 # Creates bar charts based on multiindexes
 def multi_bar(df, ftype):
-    first = df.unstack()[1]
-    second = df.unstack()[2]
-    third = df.unstack()[3]
-    first_trace = trace_input(first, '1st Class')
-    second_trace = trace_input(second, '2nd Class')
-    third_trace = trace_input(third, '3rd Class')
+    data = []
+    df_index = list(df.unstack())
+    for i in df_index:
+        value = df.unstack()[i]
+        data.append(trace_input(value, str(i)))
     layout = lay('Average Fare for Each Class Based on Port', 'group', 'Port', 'Fare')
     if ftype == 'count':
-        layout = lay('Number of Passengers for Each Class Based on {}'.format(list(df.index.names)[0]), 'group',
+        layout = lay('Number of Passengers with {}s Based on {}'.format(list(df.index.names)[1], list(df.index.names)[0]), 'group',
                      str(list(df.index.names)[0]), 'Passengers')
-    data = [first_trace, second_trace, third_trace]
     graph(data, layout)
 
 
