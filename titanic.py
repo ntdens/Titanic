@@ -8,7 +8,8 @@ def main():
     titanic = pd.read_csv('titanic_data.csv')
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId', inplace=True)
-    fare_box(titanic)
+    class_bar(titanic, 'Cabin', 'stack')
+
 
 # Returns a series with survivor data
 def survive_stats(df, col, kind='values'):
@@ -37,11 +38,14 @@ def bar_data(df, col, gtype):
 
 
 # Sorts bar data based on if the user wants a stacked or grouped chart
-def barsort(survive, total, deceased, gtype, typestr):
-    survive_bar = trace_input(survive, 'Survivors')
-    total_bar = trace_input(total, 'Total')
-    deceased_bar = trace_input(deceased, 'Deceased')
-    layout = lay('Survival Based on ' + str(typestr), gtype, typestr, 'Number of Passengers')
+def barsort(survive, total, deceased, gtype, typestr, surname='Survivors', totname='Total', decname='Deceased'):
+    survive_bar = trace_input(survive, surname)
+    total_bar = trace_input(total, totname)
+    deceased_bar = trace_input(deceased, decname)
+    title = 'Survival Based on ' + str(typestr)
+    if surname >= 'Passengers with':
+        title = '{} by Class'.format(surname)
+    layout = lay(title, gtype, typestr, 'Number of Passengers')
     if gtype == 'stack':
         data = [survive_bar, deceased_bar]
         graph(data, layout)
@@ -94,15 +98,13 @@ def portfare_data(df, ftype):
     graph(data, layout)
 
 
-# Data on cabin users by class
-def cabin_data(df):
-    total_class = df.groupby('Pclass').count()['PassengerId']
-    class_cabin = df.groupby('Pclass').count()['Cabin']
-    bar_total_class = trace_input(total_class, 'Total Passengers')
-    bar_class_cabin = trace_input(class_cabin, 'Passengers with Cabins')
-    data = [bar_total_class, bar_class_cabin]
-    layout = lay('Passengers with Cabins Compared to All, Sorted By Class', 'group', 'Class', 'Passengers')
-    graph(data, layout)
+# Data on passengers by class
+def class_bar(df, col, gtype):
+    total_class = df.groupby('Pclass').count()['Name']
+    class_cabin = df.groupby('Pclass').count()[col]
+    no_cabin = total_class - class_cabin
+    barsort(class_cabin, total_class, no_cabin, gtype, 'Class', 'Passengers with ' + str(col), 'Total Passengers',
+            'Passengers without ' + str(col))
 
 
 # Creates a new dataframe based on owning a cabin
@@ -118,6 +120,7 @@ def family_df(df):
     family = pd.DataFrame(index=df.index)
     family['SibSp'] = np.where(df['SibSp'] > 0, 'Has Siblings/Spouse', 'No Siblings/Spouse')
     family['Parch'] = np.where(df['SibSp'] > 0, 'Has Parents/Child', 'No Parents/Child')
+    family['Fare'] = df['Fare']
     family['Survived'] = df['Survived']
     return family
 
