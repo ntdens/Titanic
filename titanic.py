@@ -8,7 +8,8 @@ def main():
     titanic = pd.read_csv('titanic_data.csv')
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId', inplace=True)
-    class_bar(titanic, 'Cabin', 'stack')
+    family =family_df(titanic)
+    print(family.head())
 
 
 # Returns a series with survivor data
@@ -42,8 +43,8 @@ def barsort(survive, total, deceased, gtype, typestr, surname='Survivors', totna
     survive_bar = trace_input(survive, surname)
     total_bar = trace_input(total, totname)
     deceased_bar = trace_input(deceased, decname)
-    title = 'Survival Based on ' + str(typestr)
-    if surname >= 'Passengers with':
+    title = 'Survival Based on {}'.format(typestr)
+    if 'Passengers with' in surname:
         title = '{} by Class'.format(surname)
     layout = lay(title, gtype, typestr, 'Number of Passengers')
     if gtype == 'stack':
@@ -119,11 +120,11 @@ def cabin_df(df):
 def family_df(df):
     family = pd.DataFrame(index=df.index)
     family['SibSp'] = np.where(df['SibSp'] > 0, 'Has Siblings/Spouse', 'No Siblings/Spouse')
-    family['Parch'] = np.where(df['SibSp'] > 0, 'Has Parents/Child', 'No Parents/Child')
-    family['Fare'] = df['Fare']
+    family['Parch'] = np.where(df['Parch'] > 0, 'Has Parents/Child', 'No Parents/Child')
+    family['Family'] = np.where((df['SibSp'] > 0) | (df['Parch'] > 0), 'Has Family', 'No Family')
+    family['Pclass'] = df['Pclass']
     family['Survived'] = df['Survived']
     return family
-
 
 # Creates box plots based on fares
 def fare_box(df):
