@@ -8,9 +8,8 @@ def main():
     titanic = pd.read_csv('titanic_data.csv')
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId', inplace=True)
-    family = family_df(titanic)
-    fare_hist(family, 'Family')
-
+    meta = meta_df(titanic)
+    fare_hist(meta, 'Age')
 
 
 # Returns a series with survivor data
@@ -57,10 +56,10 @@ def barsort(survive, total, deceased, gtype, typestr, surname='Survivors', totna
 
 
 # Prints histogram based on age data
-def age_data(df):
+def age_data(df, size=1):
     survive_age = survive_stats(df, 'Age')
     total_age = df['Age']
-    data = [trace_input(total_age, 'Total', 'hist'), trace_input(survive_age, 'Survivors', 'hist')]
+    data = [trace_input(total_age, 'Total', 'hist', size), trace_input(survive_age, 'Survivors', 'hist', size)]
     layout = lay('Survival Based on Age', 'overlay', 'Age', 'Number of Passengers')
     graph(data, layout)
 
@@ -109,24 +108,32 @@ def class_bar(df, col, gtype):
             'Passengers without ' + str(col))
 
 
-# Creates a new dataframe based on owning a cabin
-def cabin_df(df):
-    cabin = pd.DataFrame(index=df.index)
-    cabin['Cabin'] = np.where(df['Cabin'].isnull().values, 'No Cabin', 'Has Cabin')
-    cabin['Survived'] = df['Survived']
-    return cabin
+# Creates a new meta dataframe
+def meta_df(df):
+    def age_filter(age):
+        if 0 <= age < 13:
+            return 'Child'
+        elif 13 <= age < 18:
+            return 'Teenager'
+        elif 18 <= age <= 30:
+            return 'Young Adult'
+        elif 30 < age <= 65:
+            return 'Adult'
+        else:
+            return 'Elderly'
 
-
-# Creates a new dataframe based on the existence of family members
-def family_df(df):
-    family = pd.DataFrame(index=df.index)
-    family['SibSp'] = np.where(df['SibSp'] > 0, 'Has Siblings/Spouse', 'No Siblings/Spouse')
-    family['Parch'] = np.where(df['Parch'] > 0, 'Has Parents/Child', 'No Parents/Child')
-    family['Family'] = np.where((df['SibSp'] > 0) | (df['Parch'] > 0), 'Has Family', 'No Family')
-    family['Pclass'] = df['Pclass']
-    family['Survived'] = df['Survived']
-    family['Fare'] = df['Fare']
-    return family
+    meta = pd.DataFrame(index=df.index)
+    meta['Cabin'] = np.where(df['Cabin'].isnull().values, 'No Cabin', 'Has Cabin')
+    meta['Survived'] = df['Survived']
+    meta['SibSp'] = np.where(df['SibSp'] > 0, 'Has Siblings/Spouse', 'No Siblings/Spouse')
+    meta['Parch'] = np.where(df['Parch'] > 0, 'Has Parents/Child', 'No Parents/Child')
+    meta['Family'] = np.where((df['SibSp'] > 0) | (df['Parch'] > 0), 'Has Family', 'No Family')
+    meta['Pclass'] = df['Pclass']
+    meta['Survived'] = df['Survived']
+    meta['Fare'] = df['Fare']
+    meta['Age'] = df['Age'].apply(age_filter)
+    meta['Embarked'] = df['Embarked']
+    return meta
 
 
 # Creates box plots based on fares
