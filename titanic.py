@@ -8,7 +8,7 @@ def main():
     titanic = pd.read_csv('titanic_data.csv')
     titanic['Survived'] = titanic['Survived'].astype(bool)
     titanic.set_index('PassengerId', inplace=True)
-
+    fare_box(titanic)
 
 # Returns a series with survivor data
 def survive_stats(df, col, kind='values'):
@@ -122,6 +122,21 @@ def family_df(df):
     return family
 
 
+# Creates box plots based on fares
+def fare_box(df):
+    new = df.set_index(['Pclass', df.index])
+    new = new.sort_index()
+    first = new.xs(1)['Fare']
+    second = new.xs(2)['Fare']
+    third = new.xs(3)['Fare']
+    first_box = trace_input(first, '1st Class', 'box')
+    second_box = trace_input(second, '2nd Class', 'box')
+    third_box = trace_input(third, '3rd Class', 'box')
+    data = [first_box, second_box, third_box]
+    layout = lay('Fares by Class', '', 'Class', 'Fare')
+    graph(data, layout)
+
+
 # Creates traces for the graph data
 def trace_input(series, name='', graphtype='bar'):
     trace = dict()
@@ -136,6 +151,11 @@ def trace_input(series, name='', graphtype='bar'):
             histfunc='sum',
             xbins=dict(start=0, end=100, size=1),
             x=series,
+            name=name
+        )
+    if graphtype == 'box':
+        trace = go.Box(
+            y=series,
             name=name
         )
     return trace
