@@ -13,7 +13,6 @@ def main():
     multi_bar(multi_index, 'count')
 
 
-
 # Returns a series with survivor data
 def survive_stats(df, col, kind='values'):
     if kind == 'values':
@@ -94,8 +93,10 @@ def multi_bar(df, ftype):
         data.append(trace_input(value, str(i)))
     layout = lay('Average Fare for Each Class Based on Port', 'group', 'Port', 'Fare')
     if ftype == 'count':
-        layout = lay('Number of Passengers with {}s Based on {}'.format(list(df.index.names)[1], list(df.index.names)[0]), 'group',
-                     str(list(df.index.names)[0]), 'Passengers')
+        layout = lay(
+            'Number of Passengers with {}s Based on {}'.format(list(df.index.names)[1], list(df.index.names)[0]),
+            'group',
+            str(list(df.index.names)[0]), 'Passengers')
     graph(data, layout)
 
 
